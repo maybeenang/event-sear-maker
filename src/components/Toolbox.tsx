@@ -1,5 +1,4 @@
 import {
-	CircleMinus,
 	Eraser,
 	Eye,
 	EyeOff,
@@ -14,8 +13,8 @@ import { cn } from "@/lib/utils";
 import { useSeatMapStore } from "@/store/useSeatMap";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Label } from "./ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const ToolBoxButton = ({
 	children,
@@ -46,9 +45,6 @@ const Toolbox = () => {
 		showMinimap,
 		mode,
 		setMode,
-		seatTypes,
-		setSelectedSeatType,
-		selectedSeatType,
 	} = useSeatMapStore();
 
 	return (
@@ -85,26 +81,7 @@ const Toolbox = () => {
 							</Button>
 						</PopoverTrigger>
 						<PopoverContent sideOffset={16} className="p-2 flex gap-2">
-							{seatTypes?.map((seatType) => (
-								<Button
-									key={seatType.id}
-									type="button"
-									size="icon"
-									className="rounded-md"
-									variant={
-										JSON.stringify(seatType) ===
-										JSON.stringify(selectedSeatType)
-											? "default"
-											: "outline"
-									}
-									onClick={() => {
-										setSelectedSeatType(seatType);
-										setMode?.("edit");
-									}}
-								>
-									{seatType.label}
-								</Button>
-							))}
+							<EditingTools />
 						</PopoverContent>
 					</Popover>
 				</div>
@@ -198,6 +175,28 @@ const Toolbox = () => {
 			</Popover>
 		</div>
 	);
+};
+
+const editingToolsIcons = {
+	none: <Eraser />,
+};
+
+const EditingTools = () => {
+	const { selectedSeatType, seatTypes, setSelectedSeatType } =
+		useSeatMapStore();
+
+	return seatTypes.map((seatType) => (
+		<ToolBoxButton
+			key={seatType.id}
+			onClick={() => {
+				setSelectedSeatType?.(seatType);
+			}}
+			active={selectedSeatType?.id === seatType.id}
+		>
+			{editingToolsIcons[seatType.id as keyof typeof editingToolsIcons] ||
+				seatType.label}
+		</ToolBoxButton>
+	));
 };
 
 export default Toolbox;

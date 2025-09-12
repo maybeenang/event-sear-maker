@@ -14,14 +14,8 @@ const Seat: React.FC<SeatProps> = ({
 	col,
 	...props
 }) => {
-	const {
-		handleSeatInteraction,
-		getSeats,
-		getSeat,
-		isDrawing,
-		setIsDrawing,
-		mode,
-	} = useSeatMapStore();
+	const { handleSeatInteraction, getSeat, isDrawing, setIsDrawing, mode } =
+		useSeatMapStore();
 
 	const seat = getSeat?.(row, col);
 
@@ -42,6 +36,7 @@ const Seat: React.FC<SeatProps> = ({
 		<button
 			onMouseDown={() => handleMouseDown(row, col)}
 			onMouseEnter={() => handleMouseEnter(row, col)}
+			onMouseUp={() => setIsDrawing(false)}
 			type="button"
 			className={cn(
 				"w-6 h-6 border border-gray-400 flex items-center justify-center font-mono select-none cursor-pointer text-xs",

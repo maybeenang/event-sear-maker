@@ -65,8 +65,8 @@ const Legends = () => (
 );
 
 const Stage = () => (
-	<div className=" h-16 bg-gray-800 flex items-center justify-center text-white m-4 rounded text-md font-semibold">
-		Stage
+	<div className=" h-16 bg-gray-800 flex items-center justify-center text-white m-4 rounded text-xl font-semibold">
+		STAGE
 	</div>
 );
 

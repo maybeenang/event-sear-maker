@@ -112,8 +112,20 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 
 			const newSeats = [...state.seats];
 
+			// check apakah selectedSeatType id adalah "none"
+			if (state.selectedSeatType.id === "none") {
+				// jika iya, hapus seat jika ada
+				if (seatIndex !== -1) {
+					newSeats.splice(seatIndex, 1);
+				}
+				return {
+					seats: newSeats,
+				};
+			}
+
 			if (seatIndex !== -1) {
 				// Update existing seat
+
 				newSeats[seatIndex] = {
 					...newSeats[seatIndex],
 					type: state.selectedSeatType,
