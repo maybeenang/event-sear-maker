@@ -77,7 +77,7 @@ const MapElement = () => {
 		<div
 			className={cn("grid gap-1")}
 			style={{
-				gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+				gridTemplateColumns: `repeat(${cols}, 40px)`,
 			}}
 		>
 			{Array.from({ length: rows }).map((_, rowIndex) =>
@@ -103,14 +103,14 @@ const SeatMap = () => {
 	const { showMinimap, mode } = useSeatMapStore();
 
 	return (
-		<div className=" bg-gray-200 flex flex-col">
+		<div className=" bg-gray-200 flex flex-col h-screen">
 			<Legends />
 
 			<Stage />
 
-			<div className="flex-1 bg-red-100 flex items-center justify-center overflow-hidden">
+			<div className="flex-1">
 				<TransformWrapper
-					initialScale={1.4}
+					initialScale={1}
 					initialPositionX={0}
 					initialPositionY={0}
 					minScale={0.5}
@@ -146,8 +146,10 @@ const SeatMap = () => {
 								</div>
 							)}
 							<TransformComponent
-								contentClass="bg-red-600"
-								wrapperClass="flex-1 overflow-auto"
+								wrapperStyle={{
+									width: "100%",
+									height: "100%",
+								}}
 							>
 								<MapElement />
 							</TransformComponent>
