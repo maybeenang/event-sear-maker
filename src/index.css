@@ -118,3 +118,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grabbing {
+  cursor: grabbing;
+}
+
+.cursor-edit {
+  cursor: crosshair; /* Atau 'pointer' jika lebih disukai */
+}

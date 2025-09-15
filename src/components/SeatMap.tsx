@@ -4,8 +4,9 @@ import {
 	TransformWrapper,
 } from "react-zoom-pan-pinch";
 import { cn } from "@/lib/utils";
-import { useSeatMapStore } from "@/store/useSeatMap";
-import Seat from "./Seat";
+import { BRICK_SEAT_TYPE, useSeatMapStore } from "@/store/useSeatMap";
+import Seat, { BlockChair, EmptyChair, FilledChair } from "./Seat";
+import { X } from "lucide-react";
 
 //
 // const _Controls = ({
@@ -42,28 +43,43 @@ import Seat from "./Seat";
 // 	</div>
 // );
 
-const Legends = () => (
-	<div className="flex bg-white">
-		<div className="flex items-center gap-2 p-2">
-			<div className="w-6 h-6 bg-white border border-gray-400 flex items-center justify-center text-xs font-mono select-none">
-				A1
-			</div>
-			<span className="text-sm">Available</span>
+const Legends = () => {
+	const { seatTypes, ticketTypes } = useSeatMapStore();
+
+	return (
+		<div className="flex bg-white items-center gap-4 p-4">
+			{ticketTypes.map((type) => (
+				<div key={type.id} className="flex items-center text-xs">
+					<FilledChair
+						key={type.id}
+						className="w-6 h-6 mr-1"
+						seat={{
+							label: type.name,
+							type: type,
+							ticketType: type,
+							id: "",
+							row: -1,
+							col: -1,
+						}}
+					/>
+					<span>{type.name}</span>
+				</div>
+			))}
+			<section>
+				<div className="flex items-center text-xs">
+					<BlockChair className="w-6 h-6 mr-1" />
+					<span>{BRICK_SEAT_TYPE.name}</span>
+				</div>
+			</section>
+			<section>
+				<div className="flex items-center text-xs">
+					<EmptyChair className="w-6 h-6 mr-1" label="A1" />
+					<span>Empty</span>
+				</div>
+			</section>
 		</div>
-		<div className="flex items-center gap-2 p-2">
-			<div className="w-6 h-6 bg-gray-400 border border-gray-400 flex items-center justify-center text-xs font-mono select-none">
-				A1
-			</div>
-			<span className="text-sm">Unavailable</span>
-		</div>
-		<div className="flex items-center gap-2 p-2">
-			<div className="w-6 h-6 bg-blue-400 border border-gray-400 flex items-center justify-center text-xs font-mono select-none">
-				A1
-			</div>
-			<span className="text-sm">Selected</span>
-		</div>
-	</div>
-);
+	);
+};
 
 const Stage = () => (
 	<div className=" h-16 mx-auto w-xl bg-gray-800 flex items-center justify-center text-white m-4 rounded text-xl font-semibold">
@@ -102,8 +118,14 @@ const MapElement = () => {
 const SeatMap = () => {
 	const { showMinimap, mode } = useSeatMapStore();
 
+	// const cursorClass = {
+	// 	normal: "",
+	// 	grep: "cursor-grab",
+	// 	edit: "cursor-edit",
+	// }[mode];
+
 	return (
-		<div className=" bg-gray-200 flex flex-col h-screen">
+		<div className={cn(" bg-gray-200 flex flex-col h-screen")}>
 			<Legends />
 
 			<Stage />

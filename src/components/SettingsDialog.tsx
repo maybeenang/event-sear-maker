@@ -4,8 +4,9 @@ import { Separator } from "./ui/separator";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Minus, Plus, Trash } from "lucide-react";
+import { Download, Minus, Plus, Trash, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRef } from "react";
 
 const SettingsDialog = () => {
 	const { settingDialogOpen, setSettingDialogOpen } = useSeatMapStore();
@@ -41,7 +42,40 @@ const SettingsDialog = () => {
 };
 
 const LayoutSettings = () => {
-	const { rows, setRows, cols, setCols } = useSeatMapStore();
+	const {
+		rows,
+		setRows,
+		cols,
+		setCols,
+		exportSeatsToJSON,
+		importSeatsFromJSON,
+	} = useSeatMapStore();
+
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleExport = () => {
+		const json = exportSeatsToJSON();
+		const blob = new Blob([json], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "seats.json";
+		a.click();
+		URL.revokeObjectURL(url);
+	};
+
+	const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = (event) => {
+			const text = event.target?.result;
+			if (typeof text === "string") {
+				importSeatsFromJSON(text);
+			}
+		};
+		reader.readAsText(file);
+	};
 
 	return (
 		<div className="space-y-4 mt-4">
@@ -95,6 +129,36 @@ const LayoutSettings = () => {
 						<Plus className="size-3" />
 					</Button>
 				</div>
+			</section>
+
+			<section className="flex items-center gap-2">
+				<Button
+					onClick={() => {
+						handleExport();
+					}}
+					title="Export"
+					variant="outline"
+				>
+					<Download />
+					Export
+				</Button>
+				<Button
+					onClick={() => {
+						fileInputRef.current?.click();
+					}}
+					title="Import"
+					variant="outline"
+				>
+					<Upload />
+					Import
+				</Button>
+				<input
+					type="file"
+					ref={fileInputRef}
+					onChange={(e) => handleImport(e)}
+					accept="application/json"
+					style={{ display: "none" }}
+				/>
 			</section>
 		</div>
 	);

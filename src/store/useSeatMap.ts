@@ -4,6 +4,7 @@ export interface ISeat {
 	id: string;
 	row: number;
 	col: number;
+	label: string;
 	type?: ISeatType;
 	ticketType?: ISeatTicketType;
 }
@@ -19,6 +20,11 @@ export interface ISeatTicketType {
 	color: string;
 	label: string;
 }
+
+export const getSeatLabel = (row: number, col: number) => {
+	// ambil menjadi A1, B2, dst
+	return `${String.fromCharCode(65 + row)}${col + 1}`;
+};
 
 interface SeatMapState {
 	// state
@@ -63,6 +69,8 @@ interface SeatMapState {
 	updateSeatsGrid: () => void;
 
 	handleSeatInteraction: (row: number, col: number) => void;
+	exportSeatsToJSON: () => string;
+	importSeatsFromJSON: (json: string) => void;
 }
 
 export const BRICK_SEAT_TYPE: ISeatType = {
@@ -75,18 +83,22 @@ export const TICKET_SEAT_TYPE: ISeatType = {
 	name: "Seat",
 };
 
+export const NONE_SEAT_TYPE: ISeatType = {
+	id: "none",
+	name: "None",
+};
+
+export const DEFAULT_ROWS = 10;
+export const DEFAULT_COLS = 26;
+
 export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 	// initial state
-	rows: 10,
-	cols: 26,
+	rows: DEFAULT_ROWS,
+	cols: DEFAULT_COLS,
 	seats: {}, // OPTIMIZED: Initial state is an empty object
 	mode: "normal",
 	showMinimap: false,
-	seatTypes: [
-		TICKET_SEAT_TYPE,
-		BRICK_SEAT_TYPE,
-		{ id: "none", name: "None", color: "gray", label: "N" },
-	],
+	seatTypes: [TICKET_SEAT_TYPE, BRICK_SEAT_TYPE, NONE_SEAT_TYPE],
 	ticketTypes: [
 		{ id: "regular", name: "Regular", label: "R", color: "#03dbfc" },
 		{ id: "vip", name: "VIP", label: "V", color: "#fca503" },
@@ -122,28 +134,26 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 	// actions
 	setSeatTypes: (seatTypes) => set(() => ({ seatTypes })),
 	setTicketTypes: (ticketTypes) => {
-		set(() => ({ ticketTypes: ticketTypes }));
-
 		// sinkronasi seat yang memiliki ticketype
 		set((state) => {
+			console.log("Updating ticket types in seats...");
 			const newSeats = { ...state.seats };
 			Object.values(newSeats).forEach((seat) => {
-				if (seat.type?.id === "ticket") {
-					if (
-						!ticketTypes.find(
-							(ticketType) => ticketType.id === seat.ticketType?.id,
-						)
-					) {
-						seat.ticketType = undefined;
+				if (seat.type?.id === "ticket" && seat.ticketType) {
+					const updatedTicketType = ticketTypes.find(
+						(t) => t.id === seat.ticketType?.id,
+					);
+					if (updatedTicketType) {
+						seat.ticketType = updatedTicketType;
 					} else {
-						seat.ticketType =
-							ticketTypes.find(
-								(ticketType) => ticketType.id === seat.ticketType?.id,
-							) || undefined;
+						seat.ticketType = undefined;
 					}
 				}
 			});
-			return { seats: newSeats };
+			const selectedTicketType = state.selectedTicketType
+				? ticketTypes.find((t) => t.id === state.selectedTicketType?.id)
+				: state.ticketTypes[0] || undefined;
+			return { ticketTypes, seats: newSeats, selectedTicketType };
 		});
 	},
 	setSelectedTicketType: (ticketType) =>
@@ -195,6 +205,7 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 					id: seatId,
 					row,
 					col,
+					label: getSeatLabel(row, col),
 					type: undefined,
 				};
 
@@ -229,6 +240,7 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 					row,
 					col,
 					type: state.selectedSeatType,
+					label: getSeatLabel(row, col),
 					ticketType:
 						state.selectedSeatType.id === "ticket"
 							? state.selectedTicketType
@@ -257,6 +269,7 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 						id: seatId,
 						row: r,
 						col: c,
+						label: getSeatLabel(r, c),
 						type: null,
 					};
 				}
@@ -285,6 +298,53 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 				break;
 			default:
 				break;
+		}
+	},
+
+	exportSeatsToJSON: () => {
+		const { seats, seatTypes, ticketTypes, rows, cols } = get();
+		const data = {
+			rows,
+			cols,
+			seatTypes,
+			ticketTypes,
+			seats: Object.values(seats), // Convert seats object to array for serialization
+		};
+		return JSON.stringify(data, null, 2);
+	},
+
+	importSeatsFromJSON: (json: string) => {
+		try {
+			const data = JSON.parse(json);
+			if (
+				typeof data.rows === "number" &&
+				typeof data.cols === "number" &&
+				Array.isArray(data.seatTypes) &&
+				Array.isArray(data.ticketTypes) &&
+				Array.isArray(data.seats)
+			) {
+				const seatsObj: { [id: string]: ISeat } = {};
+				data.seats.forEach((seat: ISeat) => {
+					seatsObj[seat.id] = seat;
+				});
+				set({
+					rows: data.rows,
+					cols: data.cols,
+					seatTypes: data.seatTypes,
+					ticketTypes: data.ticketTypes,
+					seats: seatsObj,
+					selectedSeatType: undefined,
+					selectedTicketType: undefined,
+					mode: "normal",
+				});
+			} else {
+				throw new Error("Invalid data format");
+			}
+		} catch (error) {
+			console.error("Failed to import seats from JSON:", error);
+			alert(
+				"Failed to import seats from JSON. Please check the console for details.",
+			);
 		}
 	},
 }));
