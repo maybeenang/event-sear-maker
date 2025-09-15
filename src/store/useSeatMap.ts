@@ -5,9 +5,17 @@ export interface ISeat {
 	row: number;
 	col: number;
 	type: ISeatType;
+	ticketType?: ISeatTicketType;
 }
 
 export interface ISeatType {
+	id: string;
+	name: string;
+	color: string;
+	label: string;
+}
+
+export interface ISeatTicketType {
 	id: string;
 	name: string;
 	color: string;
@@ -20,17 +28,22 @@ interface SeatMapState {
 	cols: number;
 	seats: ISeat[];
 	mode: "normal" | "grep" | "edit";
+
 	seatTypes: ISeatType[];
+	ticketTypes: ISeatTicketType[];
+
 	selectedSeatType?: ISeatType;
+	selectedTicketType?: ISeatTicketType;
 
 	isDrawing: boolean;
-
 	showMinimap: boolean;
 
 	// getter
 	getSeat: (row: number, col: number) => ISeat | undefined;
 	getSeats: () => ISeat[];
 	getSeatTypes: () => ISeatType[];
+	getTicketTypes: () => ISeatTicketType[];
+	getSelectedTicketType: () => ISeatTicketType | undefined;
 
 	// actions
 	setRows: (rows: number) => void;
@@ -41,6 +54,8 @@ interface SeatMapState {
 	setSelectedSeatType: (seatType: ISeatType) => void;
 	setSeatTypes: (seatTypes: ISeatType[]) => void;
 	setIsDrawing: (isDrawing: boolean) => void;
+	setTicketTypes: (ticketTypes: ISeatTicketType[]) => void;
+	setSelectedTicketType: (ticketType: ISeatTicketType) => void;
 
 	updateSeat: (row: number, col: number) => void;
 
@@ -51,18 +66,23 @@ interface SeatMapState {
 export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 	// initial state
 	rows: 10,
-	cols: 26,
+	cols: 50,
 	seats: [],
-	mode: "normal",
+	mode: "edit",
 	showMinimap: false,
 	seatTypes: [
+		{ id: "ticket", name: "Seat", color: "green", label: "T" },
+		{ id: "brick", name: "Brick", color: "gray", label: "B" },
 		{ id: "none", name: "None", color: "gray", label: "N" },
-		{ id: "available", name: "Available", color: "green", label: "A" },
-		{ id: "unavailable", name: "Unavailable", color: "red", label: "U" },
+	],
+	ticketTypes: [
+		{ id: "regular", name: "Regular", color: "blue", label: "R" },
+		{ id: "vip", name: "VIP", color: "gold", label: "V" },
 	],
 	isDrawing: false,
 
 	selectedSeatType: undefined,
+	selectedTicketType: undefined,
 
 	getSeat: (row, col) => {
 		return get().seats.find((seat) => seat.row === row && seat.col === col);
@@ -76,21 +96,30 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 		return get().seatTypes;
 	},
 
+	getTicketTypes: () => {
+		return get().ticketTypes;
+	},
+
+	getSelectedTicketType: () => {
+		return get().selectedTicketType;
+	},
+
 	// actions
 	setSeatTypes: (seatTypes) => set(() => ({ seatTypes })),
+	setTicketTypes: (ticketTypes) => set(() => ({ ticketTypes })),
+	setSelectedTicketType: (ticketType) =>
+		set(() => ({ selectedTicketType: ticketType })),
 
 	setRows: (rows) => set(() => ({ rows })),
 	setCols: (cols) => set(() => ({ cols })),
 	setMode: (mode) => {
 		// check if mode is edit
 		if (mode === "edit") {
-			// check apakah selectedSeatType ada
-			if (!get().selectedSeatType) {
-				// jika tidak ada, set ke seatTypes[0]
-				const seatTypes = get().seatTypes;
-				if (seatTypes.length > 0) {
-					set(() => ({ selectedSeatType: seatTypes[0] }));
-				}
+			const { selectedSeatType, setSelectedSeatType, seatTypes } = get();
+
+			if (!selectedSeatType) {
+				// set selectedSeatType to first seatType
+				setSelectedSeatType(seatTypes[0]);
 			}
 		}
 
@@ -98,8 +127,20 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 	},
 	setShowMinimap: (show) => set(() => ({ showMinimap: show })),
 	setSeats: (seats) => set(() => ({ seats })),
-	setSelectedSeatType: (seatType) =>
-		set(() => ({ selectedSeatType: seatType })),
+	setSelectedSeatType: (seatType) => {
+		// check apakah seatType adalah ticket
+		if (seatType.id === "ticket") {
+			const { selectedTicketType, setSelectedTicketType, ticketTypes } = get();
+
+			if (!selectedTicketType) {
+				// set selectedTicketType ke ticketTypes pertama
+				setSelectedTicketType(ticketTypes[0]);
+			}
+		}
+
+		set(() => ({ selectedSeatType: seatType }));
+	},
+
 	setIsDrawing: (isDrawing) => set(() => ({ isDrawing })),
 
 	updateSeat: (row, col) => {

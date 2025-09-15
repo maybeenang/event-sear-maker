@@ -1,10 +1,12 @@
+import type React from "react";
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { useSeatMapStore } from "@/store/useSeatMap";
-import type React from "react";
 
 interface SeatProps extends React.HTMLAttributes<HTMLButtonElement> {
 	row: number;
 	col: number;
+	label?: string;
 }
 
 const Seat: React.FC<SeatProps> = ({
@@ -12,6 +14,7 @@ const Seat: React.FC<SeatProps> = ({
 	className,
 	row,
 	col,
+	label,
 	...props
 }) => {
 	const { handleSeatInteraction, getSeat, isDrawing, setIsDrawing, mode } =
@@ -37,25 +40,38 @@ const Seat: React.FC<SeatProps> = ({
 			onMouseDown={() => handleMouseDown(row, col)}
 			onMouseEnter={() => handleMouseEnter(row, col)}
 			onMouseUp={() => setIsDrawing(false)}
+			title={seat ? `Seat ${seat.id}` : "No Seat"}
 			type="button"
 			className={cn(
-				"w-6 h-6 border border-gray-400 flex items-center justify-center font-mono select-none cursor-pointer text-xs",
+				" aspect-square min-w-[40px] min-h-[40px] flex items-center justify-center select-none cursor-pointer text-xs",
 				!seat && "opacity-50",
 				className,
 			)}
-			style={{
-				backgroundColor: seat?.type.color || "transparent",
-				color: seat
-					? seat.type.color === "#ffffff"
-						? "#000000"
-						: "#ffffff"
-					: "#000000",
-			}}
 			{...props}
 		>
-			{children}
+			{seat ? <FilledChair /> : <EmptyChair label={label} />}
 		</button>
 	);
 };
 
-export default Seat;
+const FilledChair = () => {
+	return (
+		<div
+			className={cn("rounded border border-gray-800 w-full h-full border-b-4")}
+		></div>
+	);
+};
+
+const EmptyChair = ({ label }: { label?: string }) => {
+	return (
+		<span
+			className={cn(
+				"rounded border border-gray-400 w-full h-full flex items-center justify-center",
+			)}
+		>
+			{label || ""}
+		</span>
+	);
+};
+
+export default memo(Seat);

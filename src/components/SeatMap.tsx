@@ -7,39 +7,40 @@ import { cn } from "@/lib/utils";
 import { useSeatMapStore } from "@/store/useSeatMap";
 import Seat from "./Seat";
 
-const _Controls = ({
-	zoomIn,
-	zoomOut,
-	resetTransform,
-}: {
-	zoomIn: () => void;
-	zoomOut: () => void;
-	resetTransform: () => void;
-}) => (
-	<div className="fixed top-4 left-4 rounded-sm space-x-2 z-10 flex flex-col gap-2">
-		<button
-			onClick={() => zoomIn()}
-			type="button"
-			className="rounded-full p-2 bg-white"
-		>
-			+
-		</button>
-		<button
-			onClick={() => zoomOut()}
-			type="button"
-			className="rounded-full p-2 bg-white"
-		>
-			-
-		</button>
-		<button
-			onClick={() => resetTransform()}
-			type="button"
-			className="rounded-full p-2 bg-white"
-		>
-			x
-		</button>
-	</div>
-);
+//
+// const _Controls = ({
+// 	zoomIn,
+// 	zoomOut,
+// 	resetTransform,
+// }: {
+// 	zoomIn: () => void;
+// 	zoomOut: () => void;
+// 	resetTransform: () => void;
+// }) => (
+// 	<div className="fixed top-4 left-4 rounded-sm space-x-2 z-10 flex flex-col gap-2">
+// 		<button
+// 			onClick={() => zoomIn()}
+// 			type="button"
+// 			className="rounded-full p-2 bg-white"
+// 		>
+// 			+
+// 		</button>
+// 		<button
+// 			onClick={() => zoomOut()}
+// 			type="button"
+// 			className="rounded-full p-2 bg-white"
+// 		>
+// 			-
+// 		</button>
+// 		<button
+// 			onClick={() => resetTransform()}
+// 			type="button"
+// 			className="rounded-full p-2 bg-white"
+// 		>
+// 			x
+// 		</button>
+// 	</div>
+// );
 
 const Legends = () => (
 	<div className="flex bg-white">
@@ -65,7 +66,7 @@ const Legends = () => (
 );
 
 const Stage = () => (
-	<div className=" h-16 bg-gray-800 flex items-center justify-center text-white m-4 rounded text-xl font-semibold">
+	<div className=" h-16 mx-auto w-xl bg-gray-800 flex items-center justify-center text-white m-4 rounded text-xl font-semibold">
 		STAGE
 	</div>
 );
@@ -73,25 +74,27 @@ const Stage = () => (
 const MapElement = () => {
 	const { rows, cols } = useSeatMapStore();
 	return (
-		<div className="p-10">
-			<div
-				className={cn("grid gap-1")}
-				style={{
-					gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-					gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
-				}}
-			>
-				{Array.from({ length: rows }).map((_, rowIndex) =>
-					Array.from({ length: cols }).map((_, colIndex) => {
-						const seatLabel = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
-						return (
-							<Seat key={seatLabel} row={rowIndex} col={colIndex}>
-								{seatLabel}
-							</Seat>
-						);
-					}),
-				)}
-			</div>
+		<div
+			className={cn("grid gap-1")}
+			style={{
+				gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+			}}
+		>
+			{Array.from({ length: rows }).map((_, rowIndex) =>
+				Array.from({ length: cols }).map((_, colIndex) => {
+					const seatLabel = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
+					return (
+						<Seat
+							key={seatLabel}
+							row={rowIndex}
+							col={colIndex}
+							label={seatLabel}
+						>
+							{seatLabel}
+						</Seat>
+					);
+				}),
+			)}
 		</div>
 	);
 };
@@ -100,12 +103,12 @@ const SeatMap = () => {
 	const { showMinimap, mode } = useSeatMapStore();
 
 	return (
-		<div className="w-screen h-screen bg-gray-200 flex flex-col">
+		<div className=" bg-gray-200 flex flex-col">
 			<Legends />
 
 			<Stage />
 
-			<div className="flex-1 min-h-0">
+			<div className="flex-1 bg-red-100 flex items-center justify-center overflow-hidden">
 				<TransformWrapper
 					initialScale={1.4}
 					initialPositionX={0}
@@ -143,7 +146,8 @@ const SeatMap = () => {
 								</div>
 							)}
 							<TransformComponent
-								wrapperStyle={{ width: "100%", height: "100%" }}
+								contentClass="bg-red-600"
+								wrapperClass="flex-1 overflow-auto"
 							>
 								<MapElement />
 							</TransformComponent>

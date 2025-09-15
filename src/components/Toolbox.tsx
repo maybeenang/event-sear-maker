@@ -1,4 +1,5 @@
 import {
+	BrickWall,
 	Eraser,
 	Eye,
 	EyeOff,
@@ -8,6 +9,7 @@ import {
 	Pencil,
 	Plus,
 	Settings,
+	Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSeatMapStore } from "@/store/useSeatMap";
@@ -15,21 +17,25 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { memo } from "react";
 
 const ToolBoxButton = ({
 	children,
 	onClick,
 	active,
+	title,
 }: {
 	children: React.ReactNode;
 	onClick: () => void;
 	active: boolean;
+	title?: string;
 }) => (
 	<Button
 		type="button"
 		size="icon"
 		variant={active ? "default" : "outline"}
 		onClick={onClick}
+		title={title}
 	>
 		{children}
 	</Button>
@@ -45,6 +51,7 @@ const Toolbox = () => {
 		showMinimap,
 		mode,
 		setMode,
+		selectedSeatType,
 	} = useSeatMapStore();
 
 	return (
@@ -80,8 +87,15 @@ const Toolbox = () => {
 								<Pencil />
 							</Button>
 						</PopoverTrigger>
-						<PopoverContent sideOffset={16} className="p-2 flex gap-2">
+						<PopoverContent sideOffset={16} className="p-2 flex gap-2 w-fit">
 							<EditingTools />
+
+							{selectedSeatType?.id === "ticket" && (
+								<>
+									<div className="border-l border-gray-200" />
+									<TicketTypeTools />
+								</>
+							)}
 						</PopoverContent>
 					</Popover>
 				</div>
@@ -179,6 +193,8 @@ const Toolbox = () => {
 
 const editingToolsIcons = {
 	none: <Eraser />,
+	brick: <BrickWall />,
+	ticket: <Ticket />,
 };
 
 const EditingTools = () => {
@@ -192,6 +208,7 @@ const EditingTools = () => {
 				setSelectedSeatType?.(seatType);
 			}}
 			active={selectedSeatType?.id === seatType.id}
+			title={seatType.name}
 		>
 			{editingToolsIcons[seatType.id as keyof typeof editingToolsIcons] ||
 				seatType.label}
@@ -199,4 +216,22 @@ const EditingTools = () => {
 	));
 };
 
-export default Toolbox;
+const TicketTypeTools = () => {
+	const { selectedTicketType, ticketTypes, setSelectedTicketType } =
+		useSeatMapStore();
+
+	return ticketTypes.map((ticketType) => (
+		<ToolBoxButton
+			key={ticketType.id}
+			onClick={() => {
+				setSelectedTicketType?.(ticketType);
+			}}
+			active={selectedTicketType?.id === ticketType.id}
+			title={ticketType.name}
+		>
+			{ticketType.label || <Ticket />}
+		</ToolBoxButton>
+	));
+};
+
+export default memo(Toolbox);
