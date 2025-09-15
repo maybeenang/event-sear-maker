@@ -1,12 +1,8 @@
 import {
 	Eraser,
-	Eye,
-	EyeOff,
 	Hand,
-	Minus,
 	MousePointer2,
 	Pencil,
-	Plus,
 	Settings,
 	Ticket,
 	X,
@@ -15,8 +11,6 @@ import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { useSeatMapStore } from "@/store/useSeatMap";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const ToolBoxButton = ({
@@ -51,16 +45,7 @@ const ToolBoxButton = ({
 );
 
 const Toolbox = () => {
-	const {
-		rows,
-		cols,
-		setRows,
-		setCols,
-		setShowMinimap,
-		showMinimap,
-		mode,
-		setMode,
-	} = useSeatMapStore();
+	const { setSettingDialogOpen, mode, setMode } = useSeatMapStore();
 
 	return (
 		<div
@@ -104,93 +89,17 @@ const Toolbox = () => {
 					</Popover>
 				</div>
 			</section>
-			<Popover>
-				<PopoverTrigger asChild>
-					<Button
-						type="button"
-						size="icon"
-						variant="outline"
-						onClick={() => {
-							setMode?.("normal");
-						}}
-					>
-						<Settings />
-					</Button>
-				</PopoverTrigger>
-				<PopoverContent className="w-auto flex gap-4" sideOffset={20}>
-					<section className="flex flex-col gap-2">
-						<Label>Rows</Label>
-						<div className="flex items-center gap-2">
-							<Button
-								type="button"
-								size="icon"
-								onClick={() => setRows(Math.max(1, rows - 1))}
-							>
-								<Minus className="size-3" />
-							</Button>
-							<Input
-								name="row"
-								type="number"
-								className="w-16 text-center"
-								min={1}
-								value={rows}
-								onChange={(e) => setRows(Number(e.target.value))}
-							/>
 
-							<Button
-								type="button"
-								size="icon"
-								onClick={() => setRows(rows + 1)}
-							>
-								<Plus className="size-3" />
-							</Button>
-						</div>
-					</section>
-
-					<section className="flex flex-col gap-2">
-						<Label>Cols</Label>
-						<div className="flex items-center gap-2">
-							<Button
-								type="button"
-								size="icon"
-								onClick={() => setCols(Math.max(1, cols - 1))}
-							>
-								<Minus className="size-3" />
-							</Button>
-							<Input
-								name="row"
-								type="number"
-								className="w-16 text-center"
-								min={1}
-								value={cols}
-								onChange={(e) => setCols(Number(e.target.value))}
-							/>
-
-							<Button
-								type="button"
-								size="icon"
-								onClick={() => setCols(cols + 1)}
-							>
-								<Plus className="size-3" />
-							</Button>
-						</div>
-					</section>
-
-					<section className="flex flex-col gap-2">
-						<Label>Minimap</Label>
-						<div className="flex items-center gap-2">
-							<Button
-								type="button"
-								size="icon"
-								variant={showMinimap ? "default" : "outline"}
-								onClick={() => setShowMinimap?.(!showMinimap)}
-							>
-								{showMinimap ? <EyeOff /> : <Eye />}
-							</Button>
-						</div>
-					</section>
-				</PopoverContent>
-			</Popover>
+			<Button
+				type="button"
+				size="icon"
+				variant="outline"
+				onClick={() => {
+					setSettingDialogOpen(true);
+				}}
+			>
+				<Settings />
+			</Button>
 		</div>
 	);
 };

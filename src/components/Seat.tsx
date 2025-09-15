@@ -44,8 +44,8 @@ const Seat: React.FC<SeatProps> = ({
 		[handleSeatInteraction, isDrawing, mode],
 	);
 
-	const chairComponent = seat ? (
-		seat.type.id === "brick" ? (
+	const chairComponent = seat?.type ? (
+		seat?.type?.id === "brick" ? (
 			<BlockChair />
 		) : (
 			<FilledChair label={label} seat={seat} />
@@ -64,6 +64,8 @@ const Seat: React.FC<SeatProps> = ({
 			className={cn(
 				" aspect-square min-w-[40px] min-h-[40px] flex items-center justify-center select-none cursor-pointer text-xs transition-all",
 				!seat && "opacity-30",
+				"hover:scale-105",
+				"hover:bg-red-100",
 				className,
 			)}
 			{...props}

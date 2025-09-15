@@ -4,15 +4,13 @@ export interface ISeat {
 	id: string;
 	row: number;
 	col: number;
-	type: ISeatType;
+	type?: ISeatType;
 	ticketType?: ISeatTicketType;
 }
 
 export interface ISeatType {
 	id: string;
 	name: string;
-	color: string;
-	label: string;
 }
 
 export interface ISeatTicketType {
@@ -38,6 +36,9 @@ interface SeatMapState {
 	isDrawing: boolean;
 	showMinimap: boolean;
 
+	settingDialogOpen: boolean;
+	setSettingDialogOpen: (open: boolean) => void;
+
 	// getter
 	getSeat: (row: number, col: number) => ISeat | undefined;
 	getSeats: () => ISeat[];
@@ -57,24 +58,21 @@ interface SeatMapState {
 	setTicketTypes: (ticketTypes: ISeatTicketType[]) => void;
 	setSelectedTicketType: (ticketType: ISeatTicketType) => void;
 
-	updateSeat: (row: number, col: number) => void;
-
 	// complex actions can be added here
+	updateSeat: (row: number, col: number) => void;
+	updateSeatsGrid: () => void;
+
 	handleSeatInteraction: (row: number, col: number) => void;
 }
 
 export const BRICK_SEAT_TYPE: ISeatType = {
 	id: "brick",
 	name: "Brick",
-	color: "gray",
-	label: "X",
 };
 
 export const TICKET_SEAT_TYPE: ISeatType = {
 	id: "ticket",
 	name: "Seat",
-	color: "green",
-	label: "T",
 };
 
 export const useSeatMapStore = create<SeatMapState>((set, get) => ({
@@ -97,6 +95,8 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 
 	selectedSeatType: undefined,
 	selectedTicketType: undefined,
+
+	settingDialogOpen: false,
 
 	getSeat: (row, col) => {
 		const seatId = `${row}-${col}`;
@@ -121,12 +121,42 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 
 	// actions
 	setSeatTypes: (seatTypes) => set(() => ({ seatTypes })),
-	setTicketTypes: (ticketTypes) => set(() => ({ ticketTypes })),
+	setTicketTypes: (ticketTypes) => {
+		set(() => ({ ticketTypes: ticketTypes }));
+
+		// sinkronasi seat yang memiliki ticketype
+		set((state) => {
+			const newSeats = { ...state.seats };
+			Object.values(newSeats).forEach((seat) => {
+				if (seat.type?.id === "ticket") {
+					if (
+						!ticketTypes.find(
+							(ticketType) => ticketType.id === seat.ticketType?.id,
+						)
+					) {
+						seat.ticketType = undefined;
+					} else {
+						seat.ticketType =
+							ticketTypes.find(
+								(ticketType) => ticketType.id === seat.ticketType?.id,
+							) || undefined;
+					}
+				}
+			});
+			return { seats: newSeats };
+		});
+	},
 	setSelectedTicketType: (ticketType) =>
 		set(() => ({ selectedTicketType: ticketType })),
 
-	setRows: (rows) => set(() => ({ rows })),
-	setCols: (cols) => set(() => ({ cols })),
+	setRows: (rows) => {
+		set(() => ({ rows }));
+		get().updateSeatsGrid();
+	},
+	setCols: (cols) => {
+		set(() => ({ cols }));
+		get().updateSeatsGrid();
+	},
 	setMode: (mode) => {
 		if (mode === "edit") {
 			const { selectedSeatType, setSelectedSeatType, seatTypes } = get();
@@ -150,6 +180,8 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 
 	setIsDrawing: (isDrawing) => set(() => ({ isDrawing })),
 
+	setSettingDialogOpen: (open) => set(() => ({ settingDialogOpen: open })),
+
 	updateSeat: (row, col) => {
 		set((state) => {
 			if (!state.selectedSeatType) return state;
@@ -159,8 +191,28 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 
 			// OPTIMIZED: More efficient update/delete logic
 			if (state.selectedSeatType.id === "none") {
-				delete newSeats[seatId];
+				newSeats[seatId] = {
+					id: seatId,
+					row,
+					col,
+					type: undefined,
+				};
+
+				return { seats: newSeats };
 			} else if (newSeats[seatId]) {
+				// check jika seat type nya sama, kalo sama return state
+				if (newSeats[seatId]?.type?.id === state.selectedSeatType.id) {
+					return state;
+				}
+
+				// check jika seat typenya adalah brick dan selectedseattype nya ticket
+				if (
+					newSeats[seatId]?.type?.id === "brick" &&
+					state.selectedSeatType.id === "ticket"
+				) {
+					return state;
+				}
+
 				// Update existing seat
 				newSeats[seatId] = {
 					...newSeats[seatId],
@@ -189,6 +241,31 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 		});
 	},
 
+	updateSeatsGrid: () => {
+		const { rows, cols } = get();
+
+		set((state) => {
+			const newSeats: Record<string, ISeat> = {};
+
+			for (let r = 0; r < rows; r++) {
+				for (let c = 0; c < cols; c++) {
+					const seatId = `${r}-${c}`;
+
+					const existingSeat = state.seats[seatId];
+
+					newSeats[seatId] = existingSeat || {
+						id: seatId,
+						row: r,
+						col: c,
+						type: null,
+					};
+				}
+			}
+
+			return { seats: newSeats };
+		});
+	},
+
 	handleSeatInteraction: (row, col) => {
 		const { mode, getSeat, updateSeat, selectedSeatType } = get();
 		const seat = getSeat(row, col);
@@ -211,6 +288,8 @@ export const useSeatMapStore = create<SeatMapState>((set, get) => ({
 		}
 	},
 }));
+
+useSeatMapStore.getState().updateSeatsGrid();
 
 document.addEventListener("mouseup", () =>
 	useSeatMapStore.getState().setIsDrawing(false),
