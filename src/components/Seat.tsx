@@ -1,8 +1,8 @@
-import type React from "react";
-import { memo, useCallback } from "react";
-import { cn } from "@/lib/utils";
-import { useSeatMapStore, type ISeat } from "@/store/useSeatMap";
 import { X } from "lucide-react";
+import { memo, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { cn } from "@/lib/utils";
+import { type ISeat, useSeatMapStore } from "@/store/useSeatMap";
 
 interface SeatProps extends React.HTMLAttributes<HTMLButtonElement> {
 	row: number;
@@ -21,9 +21,7 @@ const Seat: React.FC<SeatProps> = ({
 	const { handleSeatInteraction, isDrawing, setIsDrawing, mode } =
 		useSeatMapStore();
 
-	const seat = useSeatMapStore(
-		useCallback((state) => state.getSeat(row, col), [row, col]),
-	);
+	const seat = useSeatMapStore(useShallow((state) => state.getSeat(row, col)));
 
 	const handleMouseDown = useCallback(
 		(row: number, col: number) => {
@@ -46,12 +44,12 @@ const Seat: React.FC<SeatProps> = ({
 
 	const chairComponent = seat?.type ? (
 		seat?.type?.id === "brick" ? (
-			<BlockChair />
+			<BlockChair key={seat.label} />
 		) : (
-			<FilledChair label={label} seat={seat} />
+			<FilledChair key={seat.label} label={label} seat={seat} />
 		)
 	) : (
-		<EmptyChair label={label} />
+		<EmptyChair key={seat?.label} label={label} />
 	);
 
 	return (
@@ -64,10 +62,11 @@ const Seat: React.FC<SeatProps> = ({
 			}
 			type="button"
 			className={cn(
-				"aspect-square min-w-[40px] min-h-[40px] flex items-center justify-center select-none text-xs transition-all",
+				"aspect-square min-w-[40px] min-h-[40px] flex items-center justify-center select-none text-xs",
 				!seat && "opacity-30",
-				"hover:scale-105",
-				"hover:bg-red-100",
+				"trainsition-all",
+				// "hover:scale-105",
+				// "hover:bg-red-100",
 				className,
 			)}
 			{...props}

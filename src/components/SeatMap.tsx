@@ -1,3 +1,5 @@
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { memo, useRef } from "react";
 import {
 	MiniMap,
 	TransformComponent,
@@ -6,48 +8,12 @@ import {
 import { cn } from "@/lib/utils";
 import { BRICK_SEAT_TYPE, useSeatMapStore } from "@/store/useSeatMap";
 import Seat, { BlockChair, EmptyChair, FilledChair } from "./Seat";
-import { X } from "lucide-react";
-
-//
-// const _Controls = ({
-// 	zoomIn,
-// 	zoomOut,
-// 	resetTransform,
-// }: {
-// 	zoomIn: () => void;
-// 	zoomOut: () => void;
-// 	resetTransform: () => void;
-// }) => (
-// 	<div className="fixed top-4 left-4 rounded-sm space-x-2 z-10 flex flex-col gap-2">
-// 		<button
-// 			onClick={() => zoomIn()}
-// 			type="button"
-// 			className="rounded-full p-2 bg-white"
-// 		>
-// 			+
-// 		</button>
-// 		<button
-// 			onClick={() => zoomOut()}
-// 			type="button"
-// 			className="rounded-full p-2 bg-white"
-// 		>
-// 			-
-// 		</button>
-// 		<button
-// 			onClick={() => resetTransform()}
-// 			type="button"
-// 			className="rounded-full p-2 bg-white"
-// 		>
-// 			x
-// 		</button>
-// 	</div>
-// );
 
 const Legends = () => {
-	const { seatTypes, ticketTypes } = useSeatMapStore();
+	const { ticketTypes } = useSeatMapStore();
 
 	return (
-		<div className="flex bg-white items-center gap-4 p-4">
+		<div className="flex bg-white items-center flex-wrap gap-4 p-4">
 			{ticketTypes.map((type) => (
 				<div key={type.id} className="flex items-center text-xs">
 					<FilledChair
@@ -82,67 +48,97 @@ const Legends = () => {
 };
 
 const Stage = () => (
-	<div className=" h-16 mx-auto w-xl bg-gray-800 flex items-center justify-center text-white m-4 rounded text-xl font-semibold">
+	<div className="h-16 mx-auto w-xl bg-gray-800 flex items-center justify-center text-white m-4 rounded text-xl font-semibold">
 		STAGE
 	</div>
 );
 
-const MapElement = () => {
+// OPTIMIZED: Dibungkus dengan React.memo untuk mencegah re-render yang tidak perlu
+const MapElement = memo(() => {
 	const { rows, cols } = useSeatMapStore();
+	const parentRef = useRef<HTMLDivElement>(null);
+
+	// Ukuran kursi yang konsisten (lebar/tinggi + gap)
+	const seatSize = 40 + 4; // 40px untuk ukuran, 4px untuk gap
+
+	const rowVirtualizer = useVirtualizer({
+		count: rows,
+		getScrollElement: () => parentRef.current,
+		estimateSize: () => seatSize,
+		overscan: 5,
+	});
+
+	const columnVirtualizer = useVirtualizer({
+		horizontal: true,
+		count: cols,
+		getScrollElement: () => parentRef.current,
+		estimateSize: () => seatSize,
+		overscan: 5,
+	});
+
 	return (
-		<div
-			className={cn("grid gap-1")}
-			style={{
-				gridTemplateColumns: `repeat(${cols}, 40px)`,
-			}}
-		>
-			{Array.from({ length: rows }).map((_, rowIndex) =>
-				Array.from({ length: cols }).map((_, colIndex) => {
-					const seatLabel = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
-					return (
-						<Seat
-							key={seatLabel}
-							row={rowIndex}
-							col={colIndex}
-							label={seatLabel}
-						>
-							{seatLabel}
-						</Seat>
-					);
-				}),
-			)}
+		// Parent untuk diukur oleh virtualizer dan react-zoom-pan-pinch
+		<div ref={parentRef} className="overflow-auto w-full h-full">
+			{/* Container dengan ukuran total grid untuk menyediakan ruang scroll */}
+			<div
+				style={{
+					height: `${rowVirtualizer.getTotalSize()}px`,
+					width: `${columnVirtualizer.getTotalSize()}px`,
+					position: "relative",
+				}}
+			>
+				{/* Render hanya item virtual yang terlihat */}
+				{rowVirtualizer.getVirtualItems().map((virtualRow) =>
+					columnVirtualizer.getVirtualItems().map((virtualColumn) => {
+						const rowIndex = virtualRow.index;
+						const colIndex = virtualColumn.index;
+						const seatLabel = `${String.fromCharCode(65 + rowIndex)}${
+							colIndex + 1
+						}`;
+
+						return (
+							<div
+								key={`${rowIndex}-${colIndex}`}
+								style={{
+									position: "absolute",
+									top: 0,
+									left: 0,
+									width: `${virtualColumn.size}px`,
+									height: `${virtualRow.size}px`,
+									transform: `translateX(${virtualColumn.start}px) translateY(${virtualRow.start}px)`,
+								}}
+							>
+								<Seat row={rowIndex} col={colIndex} label={seatLabel} />
+							</div>
+						);
+					}),
+				)}
+			</div>
 		</div>
 	);
-};
+});
 
 const SeatMap = () => {
-	const { showMinimap, mode } = useSeatMapStore();
+	const { showMinimap, mode, rows, cols } = useSeatMapStore();
 
-	// const cursorClass = {
-	// 	normal: "",
-	// 	grep: "cursor-grab",
-	// 	edit: "cursor-edit",
-	// }[mode];
+	// OPTIMIZED: Kursor kustom diaktifkan kembali
+	const cursorClass = {
+		normal: "",
+		grep: "cursor-grab",
+		edit: "cursor-edit",
+	}[mode];
 
 	return (
-		<div className={cn(" bg-gray-200 flex flex-col h-screen")}>
+		<div className={cn("bg-gray-200 flex flex-col h-screen")}>
 			<Legends />
-
 			<Stage />
-
 			<div className="flex-1">
 				<TransformWrapper
 					initialScale={1}
-					initialPositionX={0}
-					initialPositionY={0}
 					minScale={0.5}
 					maxScale={4}
 					centerOnInit
 					limitToBounds={false}
-					maxPositionX={200}
-					maxPositionY={200}
-					minPositionX={-200}
-					minPositionY={-200}
 					panning={{
 						wheelPanning: true,
 						allowLeftClickPan: mode === "grep",
@@ -150,8 +146,9 @@ const SeatMap = () => {
 					wheel={{
 						wheelDisabled: true,
 					}}
+					// OPTIMIZED: Terapkan kelas kursor di sini
 				>
-					{(_) => (
+					{() => (
 						<>
 							{showMinimap && (
 								<div
@@ -163,15 +160,21 @@ const SeatMap = () => {
 									}}
 								>
 									<MiniMap width={200}>
-										<MapElement />
+										{/* OPTIMIZED: Gunakan placeholder, bukan MapElement penuh */}
+										<div
+											style={{
+												width: `${cols * 44}px`,
+												height: `${rows * 44}px`,
+												backgroundColor: "rgba(107, 114, 128, 0.2)",
+											}}
+										/>
 									</MiniMap>
 								</div>
 							)}
 							<TransformComponent
-								wrapperStyle={{
-									width: "100%",
-									height: "100%",
-								}}
+								// OPTIMIZED: Pastikan wrapper mengisi seluruh area
+								wrapperStyle={{ width: "100%", height: "100%" }}
+								wrapperClass={cursorClass}
 							>
 								<MapElement />
 							</TransformComponent>

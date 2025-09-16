@@ -1,12 +1,10 @@
 import {
-	Download,
 	Eraser,
 	Hand,
 	MousePointer2,
 	Pencil,
 	Settings,
 	Ticket,
-	Upload,
 	X,
 } from "lucide-react";
 import { memo } from "react";
