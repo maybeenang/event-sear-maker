@@ -1,11 +1,11 @@
+import SeatMapCanvas from "./components/SeatMapCanvas";
 import Toolbox from "@/components/Toolbox";
-import SeatMap from "./components/SeatMap";
 import SettingsDialog from "./components/SettingsDialog";
 
 function App() {
 	return (
 		<div className="">
-			<SeatMap />
+			<SeatMapCanvas />
 			<Toolbox />
 			<SettingsDialog />
 		</div>

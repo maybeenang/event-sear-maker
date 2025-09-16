@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { memo, useRef } from "react";
+import { memo, useCallback, useRef } from "react";
 import {
 	MiniMap,
 	TransformComponent,
@@ -63,17 +63,17 @@ const MapElement = memo(() => {
 
 	const rowVirtualizer = useVirtualizer({
 		count: rows,
-		getScrollElement: () => parentRef.current,
-		estimateSize: () => seatSize,
-		overscan: 5,
+		getScrollElement: useCallback(() => parentRef.current, []),
+		estimateSize: useCallback(() => seatSize, []),
+		overscan: 2,
 	});
 
 	const columnVirtualizer = useVirtualizer({
 		horizontal: true,
 		count: cols,
-		getScrollElement: () => parentRef.current,
-		estimateSize: () => seatSize,
-		overscan: 5,
+		getScrollElement: useCallback(() => parentRef.current, []),
+		estimateSize: useCallback(() => seatSize, []),
+		overscan: 2,
 	});
 
 	return (
